@@ -6,6 +6,10 @@
   "description": "Speech-to-Text engine. Faster-Whisper + diarization + SRT/VTT",
   "repo": "https://github.com/gaiagent0/stt-engine",
   "models": {
-    "whisper": {"source": "huggingface", "path": "large-v3"}
-  }
+    "whisper": {
+      "source": "huggingface",
+      "path": "large-v3"
+    }
+  },
+  "status": "planned"
 }

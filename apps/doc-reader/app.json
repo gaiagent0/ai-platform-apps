@@ -6,7 +6,14 @@
   "description": "Dokumentum (PDF/DOCX/EPUB/HTML) felolvaso. MinerU parser + Kokoro/Piper TTS",
   "repo": "https://github.com/gaiagent0/doc-reader",
   "models": {
-    "piper": {"source": "local", "path": "hu_HU-anna-medium.onnx"},
-    "kokoro": {"source": "huggingface", "path": "kokoro-v0.19"}
-  }
+    "piper": {
+      "source": "local",
+      "path": "hu_HU-anna-medium.onnx"
+    },
+    "kokoro": {
+      "source": "huggingface",
+      "path": "kokoro-v0.19"
+    }
+  },
+  "status": "planned"
 }
