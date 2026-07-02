@@ -1,0 +1,62 @@
+name: meetcore
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: meetcore-backend:latest
+    container_name: meetcore-backend
+    ports:
+      - "5167:5167"  # FastAPI backend
+      - "8007:8007"  # MCP server
+    volumes:
+      - meetcore-data:/data
+    environment:
+      - BACKEND_PORT=5167
+      - GENIEX_BASE_URL=${GENIEX_BASE_URL:-http://host.docker.internal:8912/v1}
+      - GENIEX_MODEL=${GENIEX_MODEL:-llama3.1-8b-qat}
+      - LITELLM_BASE_URL=${LITELLM_BASE_URL:-http://host.docker.internal:4001}
+      - LITELLM_API_KEY=${LITELLM_API_KEY:-}
+      - WHISPER_LANGUAGE=${WHISPER_LANGUAGE:-hu}
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-base}
+      - PIPER_VOICE=${PIPER_VOICE:-hu_HU-dfpros-medium}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://10.10.40.36:3000}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5167/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - meetcore-net
+
+  # Optional: Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: meetcore-frontend:latest
+    container_name: meetcore-frontend
+    ports:
+      - "3118:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5167
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - meetcore-net
+    profiles:
+      - frontend
+      - full
+
+volumes:
+  meetcore-data:
+    driver: local
+
+networks:
+  meetcore-net:
+    driver: bridge

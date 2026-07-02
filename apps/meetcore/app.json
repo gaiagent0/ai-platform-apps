@@ -2,20 +2,28 @@
   "name": "meetcore",
   "version": "2.0.0",
   "type": "docker",
-  "port": 3118,
+  "description": "Meeting hangrögzítés és AI összefoglaló. GenieX SDK, Parakeet ASR, 8 provider, Piper TTS",
+  "status": "active",
+  "repository": "https://github.com/gaiagent0/meetcore",
   "ports": [3118, 5167],
-  "description": "Meeting hangrogzites es AI osszefoglalo. GenieX SDK, Parakeet ASR, 8 provider, Piper TTS",
+  "default_port": 3118,
   "compose_file": "docker-compose.yml",
   "health_endpoint": "/health",
-  "repo": "https://github.com/gaiagent0/meetcore",
-  "status": "rebuild-planned",
-  "models": {
-    "whisper": {"source": "huggingface", "path": "base"},
-    "parakeet": {"source": "nexa", "path": "parakeet-tdt-0.6b-v3-npu"}
-  },
   "dependencies": ["litellm", "langfuse"],
-  "env": {
-    "GENIEX_BASE_URL": "http://localhost:8912/v1",
+  "models": [
+    {
+      "name": "whisper",
+      "source": "huggingface",
+      "path": "base"
+    },
+    {
+      "name": "parakeet",
+      "source": "nexa",
+      "path": "parakeet-tdt-0.6b-v3-npu"
+    }
+  ],
+  "environment": {
+    "GENIEX_BASE_URL": "http://host.docker.internal:8912/v1",
     "GENIEX_MODEL": "llama3.1-8b-qat",
     "WHISPER_LANGUAGE": "hu",
     "BACKEND_PORT": "5167",
