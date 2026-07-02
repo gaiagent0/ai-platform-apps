@@ -1,0 +1,13 @@
+{
+  "name": "voice-assistant",
+  "version": "0.1.0",
+  "type": "docker",
+  "port": 5400,
+  "description": "Hang asszisztens. openWakeWord + Faster-Whisper + Piper TTS",
+  "repo": "https://github.com/gaiagent0/voice-assistant",
+  "models": {
+    "wakeword": {"source": "local", "path": "hey_mycroft.ppn"},
+    "whisper": {"source": "huggingface", "path": "base"},
+    "piper": {"source": "local", "path": "hu_HU-anna-medium.onnx"}
+  }
+}

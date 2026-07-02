@@ -1,0 +1,12 @@
+{
+  "name": "dubbing-studio",
+  "version": "0.1.0",
+  "type": "docker",
+  "port": 5300,
+  "description": "Film szinkronizalo + felirat + lip-sync. VideoLingo pipeline",
+  "repo": "https://github.com/gaiagent0/dubbing-studio",
+  "models": {
+    "whisper": {"source": "huggingface", "path": "large-v3"},
+    "tts": {"source": "huggingface", "path": "gpt-sovits"}
+  }
+}

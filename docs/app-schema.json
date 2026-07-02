@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "AI Platform App Module",
+  "type": "object",
+  "required": ["name", "version", "type", "port", "models"],
+  "properties": {
+    "name": {"type": "string", "description": "Module name"},
+    "version": {"type": "string", "description": "Semantic version"},
+    "type": {"type": "string", "enum": ["docker", "native", "hybrid"]},
+    "port": {"type": "integer"},
+    "ports": {"type": "array", "items": {"type": "integer"}},
+    "description": {"type": "string"},
+    "compose_file": {"type": "string"},
+    "start_cmd": {"type": "string"},
+    "health_endpoint": {"type": "string"},
+    "dependencies": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Required model or service dependencies"
+    },
+    "models": {
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "properties": {
+            "source": {"type": "string"},
+            "path": {"type": "string"},
+            "size": {"type": "string"}
+          }
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    },
+    "system_deps": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "System packages required"
+    }
+  }
+}
