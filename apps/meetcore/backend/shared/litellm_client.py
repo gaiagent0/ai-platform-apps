@@ -1,26 +1,21 @@
-"""LiteLLM gateway client — routes cloud LLM calls through LiteLLM.
-
-LiteLLM provides a unified OpenAI-compatible API gateway with
-Langfuse tracing, load balancing, and failover.
-"""
+"""LiteLLM gateway client — routes cloud LLM calls through LiteLLM."""
 
 from __future__ import annotations
 
 from openai import AsyncOpenAI
 
-from .config import settings
+from core.config import settings
 
 
 _client: AsyncOpenAI | None = None
 
 
 def get_litellm_client() -> AsyncOpenAI:
-    """Get or create the LiteLLM OpenAI-compatible client."""
     global _client
     if _client is None:
         _client = AsyncOpenAI(
             base_url=settings.litellm_base_url,
-            api_key=settings.litellm_api_key or "sk-not-set",
+            api_key=settings.litellm_api_key or "sk-local",
         )
     return _client
 
@@ -31,11 +26,10 @@ async def chat_completion(
     max_tokens: int = 4096,
     temperature: float = 0.7,
 ) -> str:
-    """Send a chat completion request through the LiteLLM gateway."""
     client = get_litellm_client()
     response = await client.chat.completions.create(
         model=model,
-        messages=messages,  # type: ignore[arg-type]
+        messages=messages,
         max_tokens=max_tokens,
         temperature=temperature,
     )
@@ -48,15 +42,13 @@ async def ask_meeting_context(
     summary: str | None = None,
     model: str = "openrouter-default",
 ) -> str:
-    """Answer a question about a meeting using the LiteLLM gateway."""
     context = f"Meeting átirat:\n{transcript}\n"
     if summary:
         context += f"\nÖsszefoglaló:\n{summary}\n"
 
     system_prompt = (
         "Te egy meeting-asszisztens vagy. Válaszolj a kérdésre a megadott "
-        "meeting átirat és összefoglaló alapján. Ha a válasz nem található "
-        "a kontextusban, ezt mondd meg őszintén."
+        "meeting átirat és összefoglaló alapján."
     )
 
     messages = [
