@@ -115,8 +115,7 @@ def status(
         )
 
     console.print(table)
-    console.print(f"
-Installed: {len(state['installed'])} | Running: {len(state['running'])}")
+    console.print(f"Installed: {len(state['installed'])} | Running: {len(state['running'])}")
 
 
 @app.command()
