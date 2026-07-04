@@ -6,8 +6,8 @@ AI-powered meeting transcription, summarization, and Q&A platform.
 
 - **Backend**: FastAPI (Python 3.12) — `/api/meetings`, `/api/transcribe`, `/api/tts`, `/api/chat`
 - **Frontend**: Next.js — meeting list, detail page with transcript/summary
-- **Storage**: SQLite (aiosqlite) — meets, transcripts, summaries
-- **AI**: Faster-Whisper (STT), LiteLLM gateway (summarization), Piper TTS
+- **Storage**: SQLite (aiosqlite) — meetings, transcript_chunks, summary_processes
+- **AI**: Faster-Whisper (STT), LiteLLM gateway (summarization via qwen2.5:7b), Piper TTS
 
 ## Processing Pipeline
 
@@ -16,9 +16,10 @@ POST /api/meetings/{id}/process
   → processing → transcribing → transcribed → summarizing → completed
 ```
 
-1. **Upload**: MP3/WAV → ffmpeg converts to WAV (16kHz mono)
+1. **Upload**: MP3/WAV → ffmpeg auto-converts to WAV (16kHz mono) if not already RIFF
 2. **Transcription**: Faster-Whisper (base model, CPU, int8)
 3. **Summarization**: LiteLLM chat completion → summary + action items + topics
+4. **Storage**: Transcript → transcript_chunks table, Summary → summary_processes table
 
 ## Quick Start
 
@@ -30,16 +31,23 @@ uvicorn backend.main:app --reload --port 5167
 docker compose up -d
 ```
 
+## Configuration
+
+Environment variables (via `.env` or docker-compose):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MEETCORE_LITELLM_BASE_URL` | `http://host.docker.internal:4001` | LiteLLM gateway URL |
+| `MEETCORE_LITELLM_API_KEY` | `sk-win-vivo2` | LiteLLM master key |
+| `MEETCORE_LITELLM_MODEL` | `qwen2.5:7b` | Default model for summarization |
+| `MEETCORE_WHISPER_LANGUAGE` | `hu` | Default transcription language |
+| `MEETCORE_DATABASE_URL` | `sqlite+aiosqlite:///./meeting_minutes.db` | Database URL |
+
 ## Testing
 
 ```bash
 cd backend && PYTHONPATH=. python -m pytest tests/ -v
 ```
-
-## Known Issues
-
-- **LiteLLM 401 Unauthorized**: The summarization step requires a valid `MEETCORE_LITELLM_API_KEY` in `.env`. The default `sk-local` only works with an unauthenticated LiteLLM gateway.
-- **SQLite is ephemeral**: Database resets on container rebuild. Consider mounting a volume for production.
 
 ## API Endpoints
 

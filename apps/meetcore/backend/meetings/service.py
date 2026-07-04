@@ -18,6 +18,8 @@ from .repository import (
     update_meeting as repo_update,
     update_meeting_status as repo_update_status,
     delete_meeting as repo_delete,
+    create_transcript_chunk as repo_create_transcript,
+    create_summary_process as repo_create_summary,
 )
 
 
@@ -159,15 +161,12 @@ class MeetingService:
         if not transcript_text or not transcript_text.strip():
             await self.update_meeting_status(meeting_id, "error")
             raise ValueError("Transcription produced empty result")
-
+        # Save transcript chunk to DB
         await self._write(
-            lambda s: repo_update(s, meeting_id, transcript=transcript_text, status="transcribed")
+            lambda s: repo_create_transcript(s, meeting_id, transcript_text)
         )
+        await self.update_meeting_status(meeting_id, "transcribed")
 
-        # Save transcript to DB (checkpoint before summarization)
-        await self._write(
-            lambda s: repo_update(s, meeting_id, transcript=transcript_text, status="transcribed")
-        )
 
         # --- Step 2: Summarize with LLM ---
         await self.update_meeting_status(meeting_id, "summarizing")
@@ -197,16 +196,16 @@ class MeetingService:
             action_items = []
             topics = []
 
+        # Save summary to DB
+        summary_result = {
+            "summary": summary_text,
+            "action_items": action_items,
+            "topics": topics,
+        }
         await self._write(
-            lambda s: repo_update(
-                s, meeting_id,
-                transcript=transcript_text,
-                summary=summary_text,
-                action_items=action_items,
-                topics=topics,
-                status="completed",
-            )
+            lambda s: repo_create_summary(s, meeting_id, summary_result, model_used=settings.litellm_model)
         )
+        await self.update_meeting_status(meeting_id, "completed")
 
         return {
             "meeting_id": meeting_id,

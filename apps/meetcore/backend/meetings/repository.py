@@ -98,7 +98,7 @@ async def get_meeting_with_details(session: AsyncSession, meeting_id: str) -> Op
     result = await session.execute(
         select(SummaryProcess).where(
             SummaryProcess.meeting_id == meeting_id,
-            SummaryProcess.status == "COMPLETED",
+            SummaryProcess.status == "completed",
         )
     )
     summary_process = result.scalar_one_or_none()
@@ -147,3 +147,37 @@ async def update_meeting_status(
     meeting.status = status
     await session.flush()
     return meeting
+
+
+async def create_transcript_chunk(session, meeting_id: str, transcript_text: str) -> None:
+    """Insert a transcript chunk into the transcript_chunks table."""
+    from core.models import TranscriptChunk
+    import uuid as _uuid
+    chunk = TranscriptChunk(
+        id=str(_uuid.uuid4()),
+        meeting_id=meeting_id,
+        transcript_text=transcript_text,
+    )
+    session.add(chunk)
+    await session.flush()
+
+
+async def create_summary_process(
+    session,
+    meeting_id: str,
+    result_dict: dict,
+    model_used: str = "",
+) -> None:
+    """Insert a summary process record into the summary_processes table."""
+    from core.models import SummaryProcess
+    import uuid as _uuid
+    import json as _json
+    sp = SummaryProcess(
+        id=str(_uuid.uuid4()),
+        meeting_id=meeting_id,
+        status="completed",
+        result_json=_json.dumps(result_dict),
+        model_used=model_used,
+    )
+    session.add(sp)
+    await session.flush()
