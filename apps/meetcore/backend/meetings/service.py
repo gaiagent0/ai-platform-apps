@@ -9,6 +9,7 @@ from typing import Any, Callable, Optional
 import core.db as db_module
 from core.config import settings
 from .repository import (
+    get_meeting_with_details as repo_get_details,
     create_meeting as repo_create,
     get_meeting as repo_get,
     get_all_meetings as repo_list,
@@ -59,12 +60,18 @@ class MeetingService:
         meeting = await self._read(lambda s: repo_get(s, meeting_id))
         if not meeting:
             return None
-        return {
+        # Start with basic fields (always includes status)
+        result = {
             "id": meeting.id,
             "title": meeting.title,
             "status": meeting.status,
             "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
         }
+        # Enrich with full data from get_meeting_with_details
+        details = await self._read(lambda s: repo_get_details(s, meeting_id))
+        if details:
+            result.update(details)
+        return result
 
     async def list_meetings(self) -> list[dict]:
         meetings = await self._read(repo_list)
@@ -159,6 +166,7 @@ class MeetingService:
         await self._write(
             lambda s: repo_update(
                 s, meeting_id,
+                transcript=transcript_text,
                 summary=summary_text,
                 action_items=action_items,
                 topics=topics,

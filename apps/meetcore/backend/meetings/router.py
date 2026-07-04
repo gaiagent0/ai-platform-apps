@@ -62,6 +62,10 @@ async def _run_process(meeting_id: str) -> None:
     except (RuntimeError, ValueError, FileNotFoundError, OSError) as exc:
         await meeting_service.update_meeting_status(meeting_id, "error")
         print(f"[process] {meeting_id} failed: {exc}")
+    except Exception as exc:
+        # Safety net: catch unexpected errors (httpx, timeout, etc.)
+        await meeting_service.update_meeting_status(meeting_id, "error")
+        print(f"[process] {meeting_id} unexpected error: {exc}")
 
 
 @router.post("/{meeting_id}/process")
