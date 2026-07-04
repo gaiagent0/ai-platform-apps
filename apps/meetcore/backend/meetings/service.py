@@ -30,7 +30,7 @@ class MeetingService:
             result = await fn(session)
             await session.commit()
             return result
-        except Exception:
+        except (json.JSONDecodeError, ValueError, OSError, RuntimeError) as exc:
             await session.rollback()
             raise
         finally:

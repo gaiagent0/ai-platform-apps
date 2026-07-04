@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 
 from .service import meeting_service
 
@@ -50,22 +50,24 @@ async def upload_recording(
         raise HTTPException(status_code=404, detail="Meeting not found")
     return {"status": "uploaded", "meeting_id": meeting_id}
 
+async def _run_process(meeting_id: str) -> None:
+    """Background task: transcribe + summarize a meeting."""
+    try:
+        await meeting_service.process_meeting(meeting_id)
+    except Exception as exc:
+        await meeting_service.update_meeting_status(meeting_id, "error")
+        print(f"[process] {meeting_id} failed: {exc}")
+
+
 @router.post("/{meeting_id}/process")
-async def process_meeting(meeting_id: str):
+async def process_meeting(meeting_id: str, background_tasks: BackgroundTasks):
     """Trigger processing (transcription + summarization) for a meeting."""
     meeting = await meeting_service.get_meeting(meeting_id)
     if meeting is None:
         raise HTTPException(status_code=404, detail="Meeting not found")
     await meeting_service.update_meeting_status(meeting_id, "processing")
-    try:
-        result = await meeting_service.process_meeting(meeting_id)
-        return result
-    except FileNotFoundError as exc:
-        await meeting_service.update_meeting_status(meeting_id, "error")
-        raise HTTPException(status_code=404, detail=str(exc))
-    except Exception as exc:
-        await meeting_service.update_meeting_status(meeting_id, "error")
-        raise HTTPException(status_code=500, detail=f"Processing failed: {exc}")
+    background_tasks.add_task(_run_process, meeting_id)
+    return {"status": "processing", "meeting_id": meeting_id}
 
 
 
