@@ -19,6 +19,16 @@ from .repository import (
 )
 
 
+def _meeting_to_dict(meeting) -> dict:
+    """Convert a Meeting ORM object to a serializable dict."""
+    return {
+        "id": meeting.id,
+        "title": meeting.title,
+        "status": meeting.status,
+        "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
+    }
+
+
 class MeetingService:
     """High-level meeting orchestration with DB persistence."""
 
@@ -60,12 +70,7 @@ class MeetingService:
         meeting = await self._read(lambda s: repo_get(s, meeting_id))
         if not meeting:
             return None
-        return {
-            "id": meeting.id,
-            "title": meeting.title,
-            "status": meeting.status,
-            "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
-        }
+        return _meeting_to_dict(meeting)
 
     async def get_meeting_details(self, meeting_id: str) -> Optional[dict]:
         """Get full meeting details including transcript, summary, action_items, topics."""
@@ -81,12 +86,7 @@ class MeetingService:
             details.setdefault("created_at", meeting.created_at.isoformat() if meeting.created_at else None)
             return details
         # Fallback to basic fields
-        return {
-            "id": meeting.id,
-            "title": meeting.title,
-            "status": meeting.status,
-            "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
-        }
+        return _meeting_to_dict(meeting)
 
     async def list_meetings(self) -> list[dict]:
         meetings = await self._read(repo_list)
@@ -150,7 +150,7 @@ class MeetingService:
             lambda s: repo_update(s, meeting_id, transcript=transcript_text, status="transcribed")
         )
 
-        # Save transcript to DB (intermediate status)
+        # Save transcript to DB (checkpoint before summarization)
         await self._write(
             lambda s: repo_update(s, meeting_id, transcript=transcript_text, status="transcribed")
         )
@@ -186,6 +186,7 @@ class MeetingService:
         await self._write(
             lambda s: repo_update(
                 s, meeting_id,
+                transcript=transcript_text,
                 summary=summary_text,
                 action_items=action_items,
                 topics=topics,
