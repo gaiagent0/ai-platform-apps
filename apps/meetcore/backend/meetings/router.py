@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 
 from .service import meeting_service
@@ -69,6 +70,25 @@ async def process_meeting(meeting_id: str, background_tasks: BackgroundTasks):
     background_tasks.add_task(_run_process, meeting_id)
     return {"status": "processing", "meeting_id": meeting_id}
 
+
+
+@router.post("/cleanup-stale")
+async def cleanup_stale_meetings(max_minutes: int = 10):
+    """Reset meetings stuck in 'processing' for longer than max_minutes."""
+    meetings = await meeting_service.list_meetings()
+    cutoff = datetime.now() - timedelta(minutes=max_minutes)
+    cleaned = 0
+    for m in meetings:
+        if m.get("status") in ("processing", "transcribing", "summarizing"):
+            try:
+                created_raw = m.get("created_at")
+                created = datetime.fromisoformat(created_raw).replace(tzinfo=None) if created_raw else None
+                if created and created < cutoff:
+                    await meeting_service.update_meeting_status(m["id"], "error")
+                    cleaned += 1
+            except (ValueError, TypeError):
+                pass
+    return {"cleaned": cleaned, "max_minutes": max_minutes}
 
 
 @router.delete("/{meeting_id}/force")

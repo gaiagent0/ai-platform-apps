@@ -107,6 +107,7 @@ class MeetingService:
             raise ValueError(f"Meeting {meeting_id} not found")
 
         # --- Step 1: Transcribe ---
+        await self.update_meeting_status(meeting_id, "transcribing")
         recordings_dir = Path(settings.recordings_dir or "/data/recordings")
         file_path = recordings_dir / f"{meeting_id}.wav"
         if not file_path.exists():
@@ -128,6 +129,7 @@ class MeetingService:
         )
 
         # --- Step 2: Summarize with LLM ---
+        await self.update_meeting_status(meeting_id, "summarizing")
         from shared.litellm_client import chat_completion
 
         summary_prompt = (
