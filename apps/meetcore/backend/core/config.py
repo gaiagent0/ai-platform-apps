@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     # ── LiteLLM Gateway ──
     litellm_base_url: str = "http://host.docker.internal:4001"
     litellm_api_key: str = "sk-local"
+    litellm_model: str = "qwen2.5:7b"
     litellm_timeout: float = 120.0
     
     # ── ASR ──

@@ -22,10 +22,12 @@ def get_litellm_client() -> AsyncOpenAI:
 
 async def chat_completion(
     messages: list[dict[str, str]],
-    model: str = "qwen2.5:7b",
+    model: str | None = None,
     max_tokens: int = 4096,
     temperature: float = 0.7,
 ) -> str:
+    if model is None:
+        model = settings.litellm_model
     client = get_litellm_client()
     response = await client.chat.completions.create(
         model=model,
@@ -40,7 +42,7 @@ async def ask_meeting_context(
     question: str,
     transcript: str,
     summary: str | None = None,
-    model: str = "qwen2.5:7b",
+    model: str | None = None,
 ) -> str:
     context = f"Meeting átirat:\n{transcript}\n"
     if summary:
