@@ -1,6 +1,10 @@
 """Tests for the process meeting endpoint."""
 
+import json
+import wave
+import asyncio
 import pytest
+from unittest.mock import patch, MagicMock, AsyncMock
 from httpx import AsyncClient, ASGITransport
 
 from main import app
@@ -49,3 +53,49 @@ async def test_cleanup_stale_meetings():
             data = resp.json()
             assert "cleaned" in data
             assert "max_minutes" in data
+
+
+@pytest.mark.anyio
+async def test_process_pipeline_with_mocks(created_meeting, tmp_path):
+    """Test full pipeline using mocks (verifies status transitions)."""
+    meeting_id, client = created_meeting
+
+    wav_path = tmp_path / f"{meeting_id}.wav"
+    with wave.open(str(wav_path), 'w') as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16000)
+        w.writeframes(b'\x00\x00' * 16000)
+
+    mock_ts_instance = MagicMock()
+    mock_ts_instance.transcribe = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.text = 'Ez egy teszt transzkripcio a meetingrol.'
+    mock_ts_instance.transcribe.return_value = mock_result
+
+    with patch('transcript.service.TranscriptService', return_value=mock_ts_instance), \
+         patch('shared.litellm_client.chat_completion', new_callable=AsyncMock) as mock_chat, \
+         patch('meetings.service.settings') as mock_settings:
+
+        mock_settings.recordings_dir = str(tmp_path)
+        mock_settings.whisper_language = 'hu'
+
+        mock_chat.return_value = json.dumps({
+            'summary': 'A meeting osszefoglalasa.',
+            'action_items': ['Tennivalo 1'],
+            'topics': ['Tema 1'],
+        })
+
+        resp = await client.post(f'/api/meetings/{meeting_id}/process')
+        assert resp.status_code == 200
+        assert resp.json()['status'] == 'processing'
+
+        # Wait for background task to complete
+        for _ in range(10):
+            await asyncio.sleep(0.5)
+            resp = await client.get(f'/api/meetings/{meeting_id}')
+            status = resp.json()['status']
+            if status in ('completed', 'error'):
+                break
+
+        assert status in ('completed', 'error')

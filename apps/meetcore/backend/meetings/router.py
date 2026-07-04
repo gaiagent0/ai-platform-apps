@@ -59,7 +59,7 @@ async def _run_process(meeting_id: str) -> None:
     """Background task: transcribe + summarize a meeting."""
     try:
         await meeting_service.process_meeting(meeting_id)
-    except Exception as exc:
+    except (RuntimeError, ValueError, FileNotFoundError, OSError) as exc:
         await meeting_service.update_meeting_status(meeting_id, "error")
         print(f"[process] {meeting_id} failed: {exc}")
 
