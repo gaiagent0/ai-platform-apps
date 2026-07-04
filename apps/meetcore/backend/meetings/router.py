@@ -35,6 +35,18 @@ async def get_meeting(meeting_id: str):
     return meeting
 
 
+@router.get("/{meeting_id}/details")
+async def get_meeting_details(meeting_id: str):
+    """Get full meeting details including transcript, summary, action_items, topics."""
+    meeting = await meeting_service.get_meeting(meeting_id)
+    if meeting is None:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    details = await meeting_service.get_meeting_details(meeting_id)
+    if details:
+        return details
+    return meeting
+
+
 @router.delete("/{meeting_id}", status_code=204)
 async def delete_meeting(meeting_id: str):
     """Delete a meeting."""

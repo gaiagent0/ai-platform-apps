@@ -67,6 +67,27 @@ class MeetingService:
             "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
         }
 
+    async def get_meeting_details(self, meeting_id: str) -> Optional[dict]:
+        """Get full meeting details including transcript, summary, action_items, topics."""
+        meeting = await self._read(lambda s: repo_get(s, meeting_id))
+        if not meeting:
+            return None
+        details = await self._read(lambda s: repo_get_details(s, meeting_id))
+        if details:
+            # Ensure basic fields are always present
+            details.setdefault("id", meeting.id)
+            details.setdefault("title", meeting.title)
+            details.setdefault("status", meeting.status)
+            details.setdefault("created_at", meeting.created_at.isoformat() if meeting.created_at else None)
+            return details
+        # Fallback to basic fields
+        return {
+            "id": meeting.id,
+            "title": meeting.title,
+            "status": meeting.status,
+            "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
+        }
+
     async def list_meetings(self) -> list[dict]:
         meetings = await self._read(repo_list)
         return [
