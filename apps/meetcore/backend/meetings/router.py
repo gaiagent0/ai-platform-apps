@@ -56,11 +56,16 @@ async def process_meeting(meeting_id: str):
     meeting = await meeting_service.get_meeting(meeting_id)
     if meeting is None:
         raise HTTPException(status_code=404, detail="Meeting not found")
-    # Update status to processing
     await meeting_service.update_meeting_status(meeting_id, "processing")
-    # TODO: trigger background ASR + summarization pipeline
-    # For now, mark as transcribed if recording exists
-    return {"status": "processing", "meeting_id": meeting_id}
+    try:
+        result = await meeting_service.process_meeting(meeting_id)
+        return result
+    except FileNotFoundError as exc:
+        await meeting_service.update_meeting_status(meeting_id, "error")
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        await meeting_service.update_meeting_status(meeting_id, "error")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {exc}")
 
 
 

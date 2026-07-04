@@ -48,13 +48,33 @@ async def get_all_meetings(session: AsyncSession, limit: int = 50) -> List[Meeti
 async def update_meeting(
     session: AsyncSession,
     meeting_id: str,
+    *,
     title: Optional[str] = None,
+    status: Optional[str] = None,
+    transcript: Optional[str] = None,
+    summary: Optional[str] = None,
+    action_items: Optional[list] = None,
+    topics: Optional[list] = None,
+    file_path: Optional[str] = None,
 ) -> Optional[Meeting]:
+    """Update meeting fields (only non-None values are applied)."""
     meeting = await get_meeting(session, meeting_id)
     if not meeting:
         return None
     if title is not None:
         meeting.title = title
+    if status is not None:
+        meeting.status = status
+    if transcript is not None:
+        meeting.transcript = transcript
+    if summary is not None:
+        meeting.summary = summary
+    if action_items is not None:
+        meeting.action_items = action_items
+    if topics is not None:
+        meeting.topics = topics
+    if file_path is not None:
+        meeting.file_path = file_path
     await session.flush()
     return meeting
 
