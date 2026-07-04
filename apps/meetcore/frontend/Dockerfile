@@ -4,15 +4,19 @@ FROM node:22-alpine AS base
 # Install dependencies
 FROM base AS deps
 WORKDIR /app
-COPY package.json ./
-RUN npm install --frozen-lockfile
+COPY package.json package-lock.json* ./
+RUN npm install --frozen-lockfile 2>/dev/null || npm install
 
-# Build
+# Build — ARG/ENV must be INSIDE the builder stage (not before FROM)
 FROM base AS builder
 WORKDIR /app
+ARG BACKEND_URL=http://localhost:5167
+ARG NEXT_PUBLIC_API_URL=http://localhost:5167
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV BACKEND_URL=${BACKEND_URL}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Run

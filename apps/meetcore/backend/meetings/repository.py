@@ -8,6 +8,7 @@ from typing import Optional, List
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from core.models import Meeting, Transcript, TranscriptChunk, SummaryProcess
 
@@ -33,9 +34,15 @@ async def get_meeting(session: AsyncSession, meeting_id: str) -> Optional[Meetin
 
 async def get_all_meetings(session: AsyncSession, limit: int = 50) -> List[Meeting]:
     result = await session.execute(
-        select(Meeting).order_by(Meeting.created_at.desc()).limit(limit)
+        select(Meeting)
+        .options(
+            joinedload(Meeting.transcript_chunks).load_only(TranscriptChunk.id),
+            joinedload(Meeting.summary_processes).load_only(SummaryProcess.id),
+        )
+        .order_by(Meeting.created_at.desc())
+        .limit(limit)
     )
-    return list(result.scalars().all())
+    return list(result.scalars().unique().all())
 
 
 async def update_meeting(
@@ -105,3 +112,15 @@ async def get_meeting_with_details(session: AsyncSession, meeting_id: str) -> Op
         } for t in transcripts],
         "full_transcript": chunk.transcript_text if chunk else None,
     }
+
+
+async def update_meeting_status(
+    session: AsyncSession, meeting_id: str, status: str
+) -> Optional[Meeting]:
+    """Update meeting status."""
+    meeting = await get_meeting(session, meeting_id)
+    if not meeting:
+        return None
+    meeting.status = status
+    await session.flush()
+    return meeting

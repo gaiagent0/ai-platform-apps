@@ -10,15 +10,27 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
-    "python-multipart>=0.0.12",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.7.0",
     "sqlalchemy[asyncio]>=2.0.0",
     "alembic>=1.13.0",
     "aiosqlite>=0.19.0",
     "httpx>=0.27.0",
+    "python-multipart>=0.0.12",
     "python-dotenv>=1.0.0",
     "openai>=1.0.0",
     "mcp>=1.0.0",
-    "geniex>=-1.0.0",
+    "geniex>=0.1.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["core*", "meetings*", "transcript*", "chat*", "tts*", "asr*", "shared*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     
     # ── Database ──
     database_url: str = "sqlite+aiosqlite:///./meeting_minutes.db"
+    recordings_dir: str = "/data/recordings"
     
     # ── GenieX SDK (Qualcomm NPU) ──
     geniex_api_url: str = "http://localhost:8912/v1"

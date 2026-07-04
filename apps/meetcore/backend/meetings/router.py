@@ -45,10 +45,23 @@ async def upload_recording(
 ):
     """Upload a recorded audio file for a meeting."""
     audio_data = await file.read()
-    success = await meeting_service.save_recording(meeting_id, audio_data, file.filename or "recording.wav")
+    success = await meeting_service.save_recording(meeting_id, audio_data)
     if not success:
         raise HTTPException(status_code=404, detail="Meeting not found")
     return {"status": "uploaded", "meeting_id": meeting_id}
+
+@router.post("/{meeting_id}/process")
+async def process_meeting(meeting_id: str):
+    """Trigger processing (transcription + summarization) for a meeting."""
+    meeting = await meeting_service.get_meeting(meeting_id)
+    if meeting is None:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    # Update status to processing
+    await meeting_service.update_meeting_status(meeting_id, "processing")
+    # TODO: trigger background ASR + summarization pipeline
+    # For now, mark as transcribed if recording exists
+    return {"status": "processing", "meeting_id": meeting_id}
+
 
 
 @router.delete("/{meeting_id}/force")

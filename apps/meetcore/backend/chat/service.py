@@ -2,35 +2,35 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
-from ..meetings.storage import storage
-from ..shared.litellm_client import ask_meeting_context
+from meetings.service import meeting_service
+from shared.litellm_client import ask_meeting_context
 
 
 class ChatService:
-    """Meeting-aware chat service."""
+    """Meeting-aware Q&A service."""
 
     async def answer_question(
-        self,
-        meeting_id: str,
-        question: str,
-        model: str = "openrouter-default",
-    ) -> str:
-        """Answer a question about a meeting."""
-        meeting = storage.get(meeting_id)
-        if meeting is None:
-            return "Meeting nem található."
-        if not meeting.transcript:
-            return "A meeting még nincs feldolgozva (nincs átirat)."
+        self, meeting_id: str, question: str, model: str = "openrouter-default"
+    ) -> dict:
+        """Answer a question about a meeting using LiteLLM routing."""
+        meeting = await meeting_service.get_meeting(meeting_id)
+        if not meeting:
+            return {"answer": "Meeting not found", "meeting_id": meeting_id, "model_used": "none"}
 
-        return await ask_meeting_context(
-            question=question,
-            transcript=meeting.transcript,
-            summary=meeting.summary,
-            model=model,
-        )
+        try:
+            answer = await ask_meeting_context(
+                meeting_data=meeting,
+                question=question,
+                model=model,
+            )
+        except Exception as e:
+            answer = f"Error: {str(e)}"
+
+        return {
+            "answer": answer,
+            "meeting_id": meeting_id,
+            "model_used": model,
+        }
 
 
-# Singleton
 chat_service = ChatService()

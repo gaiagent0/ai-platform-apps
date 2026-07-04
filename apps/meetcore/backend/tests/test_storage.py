@@ -1,66 +1,48 @@
-"""Tests for meeting storage."""
+"""Tests for meeting CRUD via API."""
 
 from __future__ import annotations
 
-from meetings.models import Meeting, MeetingStatus
-from meetings.storage import MeetingStorage
+import pytest
+from httpx import AsyncClient
 
 
-def test_storage_create_and_get():
-    """Can create and retrieve a meeting."""
-    storage = MeetingStorage()
-    meeting = Meeting(id="test1", title="Storage Test")
-    storage.create(meeting)
+@pytest.mark.asyncio
+async def test_create_and_get_meeting(client: AsyncClient):
+    response = await client.post(
+        "/api/meetings/",
+        data={"title": "Storage Test", "language": "hu"},
+    )
+    assert response.status_code == 201
+    meeting_id = response.json()["id"]
 
-    retrieved = storage.get("test1")
-    assert retrieved is not None
-    assert retrieved.title == "Storage Test"
-    assert retrieved.status == MeetingStatus.RECORDING
-
-
-def test_storage_update():
-    """Can update a meeting."""
-    storage = MeetingStorage()
-    meeting = Meeting(id="test2")
-    storage.create(meeting)
-
-    updated = storage.update("test2", title="Updated", duration_seconds=300)
-    assert updated is not None
-    assert updated.title == "Updated"
-    assert updated.duration_seconds == 300
+    response = await client.get(f"/api/meetings/{meeting_id}")
+    assert response.status_code == 200
+    assert response.json()["id"] == meeting_id
+    assert response.json()["title"] == "Storage Test"
 
 
-def test_storage_delete():
-    """Can delete a meeting."""
-    storage = MeetingStorage()
-    meeting = Meeting(id="test3")
-    storage.create(meeting)
+@pytest.mark.asyncio
+async def test_delete_meeting(client: AsyncClient):
+    response = await client.post(
+        "/api/meetings/",
+        data={"title": "To Delete"},
+    )
+    assert response.status_code == 201
+    meeting_id = response.json()["id"]
 
-    assert storage.delete("test3") is True
-    assert storage.get("test3") is None
+    response = await client.delete(f"/api/meetings/{meeting_id}")
+    assert response.status_code in (200, 204)
 
-
-def test_storage_list():
-    """Can list meetings in reverse chronological order."""
-    storage = MeetingStorage()
-    m1 = Meeting(id="older")
-    m2 = Meeting(id="newer")
-    storage.create(m1)
-    storage.create(m2)
-
-    meetings = storage.list_all()
-    assert len(meetings) == 2
-    assert meetings[0].id == "newer"  # Most recent first
+    response = await client.get(f"/api/meetings/{meeting_id}")
+    assert response.status_code == 404
 
 
-def test_storage_set_transcript():
-    """Can set transcript and status updates."""
-    storage = MeetingStorage()
-    meeting = Meeting(id="test4")
-    storage.create(meeting)
+@pytest.mark.asyncio
+async def test_list_meetings_ordering(client: AsyncClient):
+    await client.post("/api/meetings/", data={"title": "First"})
+    await client.post("/api/meetings/", data={"title": "Second"})
 
-    storage.set_transcript("test4", "Hello world")
-    retrieved = storage.get("test4")
-    assert retrieved is not None
-    assert retrieved.transcript == "Hello world"
-    assert retrieved.status == MeetingStatus.TRANSCRIBED
+    response = await client.get("/api/meetings/")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 2

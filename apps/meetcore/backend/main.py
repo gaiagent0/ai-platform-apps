@@ -47,12 +47,13 @@ app = FastAPI(
     description="Meeting recording and AI summarization backend",
     version=settings.app_version,
     lifespan=lifespan,
+    redirect_slashes=False,  # Prevent 307 redirects through Next.js proxy
 )
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins or ["*"],
+    allow_origins=settings.cors_origins or ["http://localhost:3118", "http://localhost:5167", "http://127.0.0.1:3118"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
