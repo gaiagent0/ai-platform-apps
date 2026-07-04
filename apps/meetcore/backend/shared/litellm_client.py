@@ -22,7 +22,7 @@ def get_litellm_client() -> AsyncOpenAI:
 
 async def chat_completion(
     messages: list[dict[str, str]],
-    model: str = "openrouter-default",
+    model: str = "qwen2.5:7b",
     max_tokens: int = 4096,
     temperature: float = 0.7,
 ) -> str:
@@ -40,7 +40,7 @@ async def ask_meeting_context(
     question: str,
     transcript: str,
     summary: str | None = None,
-    model: str = "openrouter-default",
+    model: str = "qwen2.5:7b",
 ) -> str:
     context = f"Meeting átirat:\n{transcript}\n"
     if summary:
