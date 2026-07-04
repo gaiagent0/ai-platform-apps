@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .service import meeting_service
 
 router = APIRouter(prefix="/api/meetings", tags=["meetings"])
+
+# Simple API key security for admin endpoints
+_bearer = HTTPBearer(auto_error=False)
 
 
 @router.get("/")
