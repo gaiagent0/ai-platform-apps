@@ -60,18 +60,12 @@ class MeetingService:
         meeting = await self._read(lambda s: repo_get(s, meeting_id))
         if not meeting:
             return None
-        # Start with basic fields (always includes status)
-        result = {
+        return {
             "id": meeting.id,
             "title": meeting.title,
             "status": meeting.status,
             "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
         }
-        # Enrich with full data from get_meeting_with_details
-        details = await self._read(lambda s: repo_get_details(s, meeting_id))
-        if details:
-            result.update(details)
-        return result
 
     async def list_meetings(self) -> list[dict]:
         meetings = await self._read(repo_list)
@@ -135,6 +129,11 @@ class MeetingService:
             lambda s: repo_update(s, meeting_id, transcript=transcript_text, status="transcribed")
         )
 
+        # Save transcript to DB (intermediate status)
+        await self._write(
+            lambda s: repo_update(s, meeting_id, transcript=transcript_text, status="transcribed")
+        )
+
         # --- Step 2: Summarize with LLM ---
         await self.update_meeting_status(meeting_id, "summarizing")
         from shared.litellm_client import chat_completion
@@ -166,7 +165,6 @@ class MeetingService:
         await self._write(
             lambda s: repo_update(
                 s, meeting_id,
-                transcript=transcript_text,
                 summary=summary_text,
                 action_items=action_items,
                 topics=topics,
