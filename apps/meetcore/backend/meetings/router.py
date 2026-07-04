@@ -78,6 +78,12 @@ async def _run_process(meeting_id: str) -> None:
         # Safety net: catch unexpected errors (httpx, timeout, etc.)
         await meeting_service.update_meeting_status(meeting_id, "error")
         print(f"[process] {meeting_id} unexpected error: {exc}")
+    finally:
+        # Ensure status is never stuck in processing
+        current = await meeting_service.get_meeting(meeting_id)
+        if current and current.get("status") in ("processing", "transcribing", "summarizing"):
+            await meeting_service.update_meeting_status(meeting_id, "error")
+            print(f"[process] {meeting_id} stuck in {current["status"]}, reset to error")
 
 
 @router.post("/{meeting_id}/process")

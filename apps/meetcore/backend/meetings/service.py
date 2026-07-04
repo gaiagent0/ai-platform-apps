@@ -26,6 +26,7 @@ def _meeting_to_dict(meeting) -> dict:
         "title": meeting.title,
         "status": meeting.status,
         "created_at": meeting.created_at.isoformat() if meeting.created_at else None,
+        "duration_seconds": meeting.duration_seconds or 0,
     }
 
 
@@ -74,18 +75,13 @@ class MeetingService:
 
     async def get_meeting_details(self, meeting_id: str) -> Optional[dict]:
         """Get full meeting details including transcript, summary, action_items, topics."""
+        details = await self._read(lambda s: repo_get_details(s, meeting_id))
+        if details:
+            return details
+        # Fallback: try basic fields
         meeting = await self._read(lambda s: repo_get(s, meeting_id))
         if not meeting:
             return None
-        details = await self._read(lambda s: repo_get_details(s, meeting_id))
-        if details:
-            # Ensure basic fields are always present
-            details.setdefault("id", meeting.id)
-            details.setdefault("title", meeting.title)
-            details.setdefault("status", meeting.status)
-            details.setdefault("created_at", meeting.created_at.isoformat() if meeting.created_at else None)
-            return details
-        # Fallback to basic fields
         return _meeting_to_dict(meeting)
 
     async def list_meetings(self) -> list[dict]:
