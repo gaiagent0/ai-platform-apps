@@ -119,6 +119,7 @@ async def get_meeting_with_details(session: AsyncSession, meeting_id: str) -> Op
     return {
         "id": meeting.id,
         "title": meeting.title,
+        "status": meeting.status,
         "created_at": meeting.created_at,
         "updated_at": meeting.updated_at,
         "summary": _result_dict,
