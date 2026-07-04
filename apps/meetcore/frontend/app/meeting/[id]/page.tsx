@@ -232,10 +232,10 @@ export default function MeetingDetailPage() {
             <Card>
               <CardHeader><CardTitle className="text-lg">Összefoglaló</CardTitle></CardHeader>
               <CardContent>
-                {meeting.summary ? (
+                {meeting.summary_text ? (
                   <div className="space-y-6">
                     <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
-                      {meeting.summary}
+                      {meeting.summary_text}
                     </div>
                     {meeting.action_items && meeting.action_items.length > 0 && (
                       <div>

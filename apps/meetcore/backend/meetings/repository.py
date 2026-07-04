@@ -115,13 +115,14 @@ async def get_meeting_with_details(session: AsyncSession, meeting_id: str) -> Op
     )
     chunk = result.scalar_one_or_none()
     
+    _result_dict = summary_process.get_result_dict() if summary_process else None
     return {
         "id": meeting.id,
         "title": meeting.title,
         "created_at": meeting.created_at,
         "updated_at": meeting.updated_at,
-        "summary": summary_process.get_result_dict() if summary_process else None,
-        "summary_text": (summary_process.get_result_dict() or {}).get("summary", "") if summary_process else None,
+        "summary": _result_dict,
+        "summary_text": (_result_dict or {}).get("summary", "") if _result_dict else None,
         "summary_metadata": summary_process.get_metadata_dict() if summary_process else {},
         "transcripts": [{
             "id": t.id,

@@ -20,6 +20,7 @@ export interface Meeting {
   duration_seconds: number;
   transcript?: string;
   summary?: string;
+  summary_text?: string;
   transcripts?: Array<{ id: string; text: string; timestamp?: string }>;
   action_items?: string[];
   topics?: string[];
