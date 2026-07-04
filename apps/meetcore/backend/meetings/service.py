@@ -134,7 +134,7 @@ class MeetingService:
         from transcript.service import TranscriptService
         ts = TranscriptService()
         result = await ts.transcribe(
-            file_path=str(file_path),
+            audio_path=str(file_path),
             language=settings.whisper_language,
         )
         transcript_text = result.text

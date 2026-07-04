@@ -21,6 +21,7 @@ dependencies = [
     "openai>=1.0.0",
     "mcp>=1.0.0",
     "geniex>=0.1.0",
+    "faster-whisper>=1.1.0",
 ]
 
 [project.optional-dependencies]
