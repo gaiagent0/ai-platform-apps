@@ -11,8 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv for fast package management
-# Install uv via curl (ghcr.io blocked by auth in Docker Hub)
+# Install uv via curl (ghcr.io blocked by ghcr.io auth)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && mv /root/.local/bin/uv /usr/local/bin/uv
 
 # Copy all source code first (needed for non-editable install)

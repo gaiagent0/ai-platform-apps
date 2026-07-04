@@ -1,6 +1,8 @@
 """Meeting service - orchestrates meetings using DB-backed repository."""
 
 from __future__ import annotations
+import subprocess
+import tempfile
 
 import json
 from pathlib import Path
@@ -112,8 +114,24 @@ class MeetingService:
         try:
             recordings_dir = Path(settings.recordings_dir or "/data/recordings")
             recordings_dir.mkdir(parents=True, exist_ok=True)
-            file_path = recordings_dir / f"{meeting_id}.wav"
-            file_path.write_bytes(audio_data)
+            wav_path = recordings_dir / f"{meeting_id}.wav"
+            # Check if the data is already WAV (starts with RIFF header)
+            if audio_data[:4] == b"RIFF":
+                wav_path.write_bytes(audio_data)
+            else:
+                # Non-WAV format (MP3, OGG, etc.) -> convert with ffmpeg
+                with tempfile.NamedTemporaryFile(suffix=".audio", delete=False) as tmp:
+                    tmp.write(audio_data)
+                    tmp_path = tmp.name
+                try:
+                    subprocess.run(
+                        ["ffmpeg", "-y", "-i", tmp_path,
+                         "-ar", "16000", "-ac", "1", str(wav_path)],
+                        check=True, capture_output=True, timeout=60,
+                    )
+                finally:
+                    import os
+                    os.unlink(tmp_path)
             return True
         except OSError as exc:
             raise RuntimeError(f"Failed to save recording: {exc}") from exc
