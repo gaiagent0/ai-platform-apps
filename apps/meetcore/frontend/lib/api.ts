@@ -72,6 +72,10 @@ export async function getMeeting(id: string): Promise<Meeting> {
   return api<Meeting>(`/api/meetings/${id}`);
 }
 
+export async function getMeetingDetails(id: string): Promise<Meeting> {
+  return api<Meeting>(`/api/meetings/${id}/details`);
+}
+
 export async function createMeeting(title: string = "", language: string = "hu"): Promise<Meeting> {
   const formData = new URLSearchParams();
   formData.append("title", title);

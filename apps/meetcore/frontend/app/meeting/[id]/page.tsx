@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getMeeting, uploadRecording, processMeeting, askQuestion, deleteMeeting, type Meeting } from "@/lib/api";
+import { getMeetingDetails, uploadRecording, processMeeting, askQuestion, deleteMeeting, type Meeting } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ export default function MeetingDetailPage() {
   const loadMeeting = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getMeeting(meetingId);
+      const data = await getMeetingDetails(meetingId);
       setMeeting(data);
       setError("");
     } catch (e) {

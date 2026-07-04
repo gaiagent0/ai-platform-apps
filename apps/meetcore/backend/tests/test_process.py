@@ -104,3 +104,33 @@ async def test_process_pipeline_with_mocks(created_meeting, tmp_path):
         # Verify services were called
         assert mock_ts_instance.transcribe.called, 'TranscriptService.transcribe should have been called'
         assert mock_chat.called, 'chat_completion should have been called'
+
+
+@pytest.mark.anyio
+async def test_get_meeting_transcript():
+    """GET /{id}/transcript should return transcript data or 404."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Create a meeting first
+        resp = await client.post("/api/meetings/", data={"title": "TranscriptTest", "language": "hu"})
+        assert resp.status_code == 201
+        meeting_id = resp.json()["id"]
+
+        # Get transcript (should be None for new meeting)
+        resp = await client.get(f"/api/meetings/{meeting_id}/transcript")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["meeting_id"] == meeting_id
+        assert data["transcript"] is None  # No transcript yet
+
+        # Cleanup
+        await client.delete(f"/api/meetings/{meeting_id}")
+
+
+@pytest.mark.anyio
+async def test_get_meeting_transcript_404():
+    """GET /nonexistent/transcript should return 404."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/meetings/nonexistent-id/transcript")
+        assert resp.status_code == 404
