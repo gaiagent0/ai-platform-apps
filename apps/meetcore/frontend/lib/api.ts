@@ -72,8 +72,17 @@ export async function getMeeting(id: string): Promise<Meeting> {
   return api<Meeting>(`/api/meetings/${id}`);
 }
 
-export async function getMeetingDetails(id: string): Promise<Meeting> {
-  return api<Meeting>(`/api/meetings/${id}/details`);
+/**
+ * Extended meeting data with transcript, summary, action_items, topics.
+ */
+export interface MeetingDetails extends Meeting {
+  full_transcript?: string | null;
+  summary_text?: string;
+  summary_metadata?: Record<string, unknown>;
+}
+
+export async function getMeetingDetails(id: string): Promise<MeetingDetails> {
+  return api<MeetingDetails>(`/api/meetings/${id}/details`);
 }
 
 export async function createMeeting(title: string = "", language: string = "hu"): Promise<Meeting> {
