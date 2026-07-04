@@ -117,6 +117,19 @@ async def cleanup_stale_meetings(max_minutes: int = 10):
     return {"cleaned": cleaned, "max_minutes": max_minutes}
 
 
+@router.get("/{meeting_id}/transcript")
+async def get_meeting_transcript(meeting_id: str):
+    """Get only the transcript text for a meeting."""
+    meeting = await meeting_service.get_meeting(meeting_id)
+    if meeting is None:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    details = await meeting_service.get_meeting_details(meeting_id)
+    if details and details.get("full_transcript"):
+        return {"meeting_id": meeting_id, "transcript": details["full_transcript"]}
+    # Fallback: return empty transcript
+    return {"meeting_id": meeting_id, "transcript": None}
+
+
 @router.delete("/{meeting_id}/force")
 async def delete_meeting_force(meeting_id: str):
     """Delete meeting with confirmation response."""
